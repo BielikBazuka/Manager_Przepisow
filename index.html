@@ -1,0 +1,818 @@
+import React, { useState, useMemo } from 'react';
+import { Plus, X, Search, Tag, ChefHat, Trash2, Edit2, Save } from 'lucide-react';
+
+const RecipeManager = () => {
+  const [recipes, setRecipes] = useState([]);
+  const [ingredients, setIngredients] = useState({
+    // Grains, Pasta & Cereals
+    'pasta': { kcal: 371, unit: '100g' }, 'spaghetti': { kcal: 371, unit: '100g' }, 'macaroni': { kcal: 371, unit: '100g' },
+    'penne': { kcal: 371, unit: '100g' }, 'fusilli': { kcal: 371, unit: '100g' }, 'fettuccine': { kcal: 371, unit: '100g' },
+    'lasagna noodles': { kcal: 371, unit: '100g' }, 'rice': { kcal: 130, unit: '100g' }, 'white rice': { kcal: 130, unit: '100g' },
+    'brown rice': { kcal: 111, unit: '100g' }, 'basmati rice': { kcal: 121, unit: '100g' }, 'jasmine rice': { kcal: 130, unit: '100g' },
+    'wild rice': { kcal: 101, unit: '100g' }, 'rice noodles': { kcal: 109, unit: '100g' }, 'flour': { kcal: 364, unit: '100g' },
+    'all-purpose flour': { kcal: 364, unit: '100g' }, 'whole wheat flour': { kcal: 340, unit: '100g' }, 'bread flour': { kcal: 361, unit: '100g' },
+    'rye flour': { kcal: 338, unit: '100g' }, 'almond flour': { kcal: 571, unit: '100g' }, 'coconut flour': { kcal: 400, unit: '100g' },
+    'bread': { kcal: 265, unit: '100g' }, 'white bread': { kcal: 265, unit: '100g' }, 'whole wheat bread': { kcal: 247, unit: '100g' },
+    'rye bread': { kcal: 259, unit: '100g' }, 'sourdough bread': { kcal: 271, unit: '100g' }, 'baguette': { kcal: 272, unit: '100g' },
+    'ciabatta': { kcal: 271, unit: '100g' }, 'pita bread': { kcal: 275, unit: '100g' }, 'naan': { kcal: 262, unit: '100g' },
+    'tortilla': { kcal: 304, unit: '100g' }, 'bagel': { kcal: 257, unit: '100g' }, 'croissant': { kcal: 406, unit: '100g' },
+    'oatmeal': { kcal: 389, unit: '100g' }, 'oats': { kcal: 389, unit: '100g' }, 'rolled oats': { kcal: 389, unit: '100g' },
+    'quinoa': { kcal: 120, unit: '100g' }, 'couscous': { kcal: 112, unit: '100g' }, 'bulgur': { kcal: 83, unit: '100g' },
+    'cornmeal': { kcal: 370, unit: '100g' }, 'polenta': { kcal: 370, unit: '100g' }, 'barley': { kcal: 123, unit: '100g' },
+    'millet': { kcal: 119, unit: '100g' }, 'buckwheat': { kcal: 343, unit: '100g' }, 'semolina': { kcal: 360, unit: '100g' },
+    'cornflakes': { kcal: 357, unit: '100g' }, 'muesli': { kcal: 366, unit: '100g' }, 'granola': { kcal: 471, unit: '100g' },
+    
+    // Dairy Products
+    'milk': { kcal: 42, unit: '100ml' }, 'whole milk': { kcal: 61, unit: '100ml' }, 'skim milk': { kcal: 34, unit: '100ml' },
+    '2% milk': { kcal: 50, unit: '100ml' }, 'almond milk': { kcal: 17, unit: '100ml' }, 'soy milk': { kcal: 33, unit: '100ml' },
+    'oat milk': { kcal: 47, unit: '100ml' }, 'coconut milk': { kcal: 230, unit: '100ml' }, 'buttermilk': { kcal: 40, unit: '100ml' },
+    'butter': { kcal: 717, unit: '100g' }, 'salted butter': { kcal: 717, unit: '100g' }, 'unsalted butter': { kcal: 717, unit: '100g' },
+    'ghee': { kcal: 900, unit: '100g' }, 'margarine': { kcal: 717, unit: '100g' }, 'cheese': { kcal: 402, unit: '100g' },
+    'cheddar cheese': { kcal: 403, unit: '100g' }, 'mozzarella cheese': { kcal: 280, unit: '100g' }, 'parmesan cheese': { kcal: 431, unit: '100g' },
+    'feta cheese': { kcal: 264, unit: '100g' }, 'gouda cheese': { kcal: 356, unit: '100g' }, 'brie cheese': { kcal: 334, unit: '100g' },
+    'swiss cheese': { kcal: 380, unit: '100g' }, 'blue cheese': { kcal: 353, unit: '100g' }, 'ricotta cheese': { kcal: 174, unit: '100g' },
+    'cottage cheese': { kcal: 98, unit: '100g' }, 'cream cheese': { kcal: 342, unit: '100g' }, 'mascarpone': { kcal: 429, unit: '100g' },
+    'cream': { kcal: 340, unit: '100ml' }, 'heavy cream': { kcal: 340, unit: '100ml' }, 'whipping cream': { kcal: 345, unit: '100ml' },
+    'sour cream': { kcal: 193, unit: '100g' }, 'yogurt': { kcal: 59, unit: '100g' }, 'greek yogurt': { kcal: 59, unit: '100g' },
+    'plain yogurt': { kcal: 61, unit: '100g' }, 'kefir': { kcal: 41, unit: '100ml' }, 'ice cream': { kcal: 207, unit: '100g' },
+    
+    // Proteins - Meat
+    'chicken breast': { kcal: 165, unit: '100g' }, 'chicken thigh': { kcal: 209, unit: '100g' }, 'chicken wing': { kcal: 203, unit: '100g' },
+    'chicken drumstick': { kcal: 172, unit: '100g' }, 'whole chicken': { kcal: 239, unit: '100g' }, 'ground chicken': { kcal: 143, unit: '100g' },
+    'turkey breast': { kcal: 135, unit: '100g' }, 'ground turkey': { kcal: 149, unit: '100g' }, 'duck': { kcal: 337, unit: '100g' },
+    'beef': { kcal: 250, unit: '100g' }, 'ground beef': { kcal: 250, unit: '100g' }, 'beef steak': { kcal: 271, unit: '100g' },
+    'sirloin steak': { kcal: 271, unit: '100g' }, 'ribeye steak': { kcal: 291, unit: '100g' }, 'beef tenderloin': { kcal: 227, unit: '100g' },
+    'beef brisket': { kcal: 215, unit: '100g' }, 'beef chuck': { kcal: 277, unit: '100g' }, 'veal': { kcal: 172, unit: '100g' },
+    'pork': { kcal: 242, unit: '100g' }, 'pork chop': { kcal: 231, unit: '100g' }, 'pork tenderloin': { kcal: 143, unit: '100g' },
+    'pork loin': { kcal: 206, unit: '100g' }, 'pork belly': { kcal: 518, unit: '100g' }, 'ground pork': { kcal: 263, unit: '100g' },
+    'bacon': { kcal: 541, unit: '100g' }, 'ham': { kcal: 145, unit: '100g' }, 'prosciutto': { kcal: 217, unit: '100g' },
+    'salami': { kcal: 407, unit: '100g' }, 'chorizo': { kcal: 455, unit: '100g' }, 'pepperoni': { kcal: 504, unit: '100g' },
+    'sausage': { kcal: 346, unit: '100g' }, 'hot dog': { kcal: 290, unit: '100g' }, 'lamb': { kcal: 294, unit: '100g' },
+    'lamb chop': { kcal: 282, unit: '100g' }, 'ground lamb': { kcal: 283, unit: '100g' }, 'rabbit': { kcal: 173, unit: '100g' },
+    'venison': { kcal: 157, unit: '100g' }, 'liver': { kcal: 135, unit: '100g' }, 'chicken liver': { kcal: 119, unit: '100g' },
+    
+    // Proteins - Fish & Seafood
+    'salmon': { kcal: 208, unit: '100g' }, 'atlantic salmon': { kcal: 208, unit: '100g' }, 'smoked salmon': { kcal: 117, unit: '100g' },
+    'tuna': { kcal: 144, unit: '100g' }, 'canned tuna': { kcal: 128, unit: '100g' }, 'tuna steak': { kcal: 144, unit: '100g' },
+    'cod': { kcal: 82, unit: '100g' }, 'halibut': { kcal: 111, unit: '100g' }, 'tilapia': { kcal: 96, unit: '100g' },
+    'trout': { kcal: 148, unit: '100g' }, 'mackerel': { kcal: 205, unit: '100g' }, 'sardines': { kcal: 208, unit: '100g' },
+    'anchovies': { kcal: 210, unit: '100g' }, 'herring': { kcal: 158, unit: '100g' }, 'sea bass': { kcal: 97, unit: '100g' },
+    'swordfish': { kcal: 144, unit: '100g' }, 'mahi mahi': { kcal: 85, unit: '100g' }, 'catfish': { kcal: 105, unit: '100g' },
+    'haddock': { kcal: 87, unit: '100g' }, 'flounder': { kcal: 91, unit: '100g' }, 'sole': { kcal: 70, unit: '100g' },
+    'shrimp': { kcal: 99, unit: '100g' }, 'prawns': { kcal: 99, unit: '100g' }, 'crab': { kcal: 97, unit: '100g' },
+    'lobster': { kcal: 89, unit: '100g' }, 'scallops': { kcal: 69, unit: '100g' }, 'clams': { kcal: 74, unit: '100g' },
+    'mussels': { kcal: 86, unit: '100g' }, 'oysters': { kcal: 68, unit: '100g' }, 'squid': { kcal: 92, unit: '100g' },
+    'octopus': { kcal: 82, unit: '100g' }, 'calamari': { kcal: 92, unit: '100g' },
+    
+    // Proteins - Eggs & Plant-based
+    'egg': { kcal: 155, unit: '100g' }, 'whole egg': { kcal: 155, unit: '100g' }, 'egg white': { kcal: 52, unit: '100g' },
+    'egg yolk': { kcal: 322, unit: '100g' }, 'quail egg': { kcal: 158, unit: '100g' }, 'duck egg': { kcal: 185, unit: '100g' },
+    'tofu': { kcal: 76, unit: '100g' }, 'firm tofu': { kcal: 76, unit: '100g' }, 'silken tofu': { kcal: 55, unit: '100g' },
+    'tempeh': { kcal: 193, unit: '100g' }, 'seitan': { kcal: 370, unit: '100g' }, 'edamame': { kcal: 121, unit: '100g' },
+    
+    // Legumes & Beans
+    'chickpeas': { kcal: 164, unit: '100g' }, 'black beans': { kcal: 132, unit: '100g' }, 'kidney beans': { kcal: 127, unit: '100g' },
+    'pinto beans': { kcal: 143, unit: '100g' }, 'white beans': { kcal: 139, unit: '100g' }, 'navy beans': { kcal: 140, unit: '100g' },
+    'lima beans': { kcal: 115, unit: '100g' }, 'lentils': { kcal: 116, unit: '100g' }, 'red lentils': { kcal: 116, unit: '100g' },
+    'green lentils': { kcal: 116, unit: '100g' }, 'split peas': { kcal: 118, unit: '100g' }, 'black-eyed peas': { kcal: 116, unit: '100g' },
+    'fava beans': { kcal: 110, unit: '100g' }, 'mung beans': { kcal: 105, unit: '100g' }, 'adzuki beans': { kcal: 128, unit: '100g' },
+    'soybeans': { kcal: 173, unit: '100g' }, 'hummus': { kcal: 166, unit: '100g' },
+    
+    // Vegetables
+    'tomato': { kcal: 18, unit: '100g' }, 'cherry tomato': { kcal: 18, unit: '100g' }, 'roma tomato': { kcal: 18, unit: '100g' },
+    'sun-dried tomato': { kcal: 258, unit: '100g' }, 'tomato paste': { kcal: 82, unit: '100g' }, 'tomato sauce': { kcal: 24, unit: '100g' },
+    'onion': { kcal: 40, unit: '100g' }, 'red onion': { kcal: 40, unit: '100g' }, 'yellow onion': { kcal: 40, unit: '100g' },
+    'white onion': { kcal: 40, unit: '100g' }, 'green onion': { kcal: 32, unit: '100g' }, 'scallion': { kcal: 32, unit: '100g' },
+    'shallot': { kcal: 72, unit: '100g' }, 'leek': { kcal: 61, unit: '100g' }, 'garlic': { kcal: 149, unit: '100g' },
+    'ginger': { kcal: 80, unit: '100g' }, 'carrot': { kcal: 41, unit: '100g' }, 'celery': { kcal: 14, unit: '100g' },
+    'potato': { kcal: 77, unit: '100g' }, 'sweet potato': { kcal: 86, unit: '100g' }, 'red potato': { kcal: 70, unit: '100g' },
+    'russet potato': { kcal: 79, unit: '100g' }, 'yukon gold potato': { kcal: 77, unit: '100g' }, 'bell pepper': { kcal: 31, unit: '100g' },
+    'red bell pepper': { kcal: 31, unit: '100g' }, 'green bell pepper': { kcal: 20, unit: '100g' }, 'yellow bell pepper': { kcal: 27, unit: '100g' },
+    'jalapeño': { kcal: 29, unit: '100g' }, 'chili pepper': { kcal: 40, unit: '100g' }, 'habanero': { kcal: 40, unit: '100g' },
+    'mushroom': { kcal: 22, unit: '100g' }, 'button mushroom': { kcal: 22, unit: '100g' }, 'portobello mushroom': { kcal: 22, unit: '100g' },
+    'shiitake mushroom': { kcal: 34, unit: '100g' }, 'oyster mushroom': { kcal: 33, unit: '100g' }, 'spinach': { kcal: 23, unit: '100g' },
+    'kale': { kcal: 49, unit: '100g' }, 'lettuce': { kcal: 15, unit: '100g' }, 'romaine lettuce': { kcal: 17, unit: '100g' },
+    'iceberg lettuce': { kcal: 14, unit: '100g' }, 'arugula': { kcal: 25, unit: '100g' }, 'cabbage': { kcal: 25, unit: '100g' },
+    'red cabbage': { kcal: 31, unit: '100g' }, 'napa cabbage': { kcal: 16, unit: '100g' }, 'brussels sprouts': { kcal: 43, unit: '100g' },
+    'broccoli': { kcal: 34, unit: '100g' }, 'cauliflower': { kcal: 25, unit: '100g' }, 'asparagus': { kcal: 20, unit: '100g' },
+    'green beans': { kcal: 31, unit: '100g' }, 'zucchini': { kcal: 17, unit: '100g' }, 'cucumber': { kcal: 15, unit: '100g' },
+    'eggplant': { kcal: 25, unit: '100g' }, 'squash': { kcal: 16, unit: '100g' }, 'butternut squash': { kcal: 45, unit: '100g' },
+    'acorn squash': { kcal: 40, unit: '100g' }, 'pumpkin': { kcal: 26, unit: '100g' }, 'beets': { kcal: 43, unit: '100g' },
+    'radish': { kcal: 16, unit: '100g' }, 'turnip': { kcal: 28, unit: '100g' }, 'parsnip': { kcal: 75, unit: '100g' },
+    'corn': { kcal: 86, unit: '100g' }, 'sweet corn': { kcal: 86, unit: '100g' }, 'peas': { kcal: 81, unit: '100g' },
+    'snow peas': { kcal: 42, unit: '100g' }, 'snap peas': { kcal: 42, unit: '100g' }, 'artichoke': { kcal: 47, unit: '100g' },
+    'fennel': { kcal: 31, unit: '100g' }, 'bok choy': { kcal: 13, unit: '100g' }, 'swiss chard': { kcal: 19, unit: '100g' },
+    'collard greens': { kcal: 32, unit: '100g' }, 'watercress': { kcal: 11, unit: '100g' }, 'endive': { kcal: 17, unit: '100g' },
+    'radicchio': { kcal: 23, unit: '100g' }, 'bamboo shoots': { kcal: 27, unit: '100g' }, 'bean sprouts': { kcal: 30, unit: '100g' },
+    'alfalfa sprouts': { kcal: 23, unit: '100g' }, 'seaweed': { kcal: 45, unit: '100g' }, 'nori': { kcal: 35, unit: '100g' },
+    'wakame': { kcal: 45, unit: '100g' },
+    
+    // Fruits
+    'apple': { kcal: 52, unit: '100g' }, 'banana': { kcal: 89, unit: '100g' }, 'orange': { kcal: 47, unit: '100g' },
+    'strawberry': { kcal: 32, unit: '100g' }, 'blueberry': { kcal: 57, unit: '100g' }, 'raspberry': { kcal: 52, unit: '100g' },
+    'blackberry': { kcal: 43, unit: '100g' }, 'grape': { kcal: 69, unit: '100g' }, 'watermelon': { kcal: 30, unit: '100g' },
+    'cantaloupe': { kcal: 34, unit: '100g' }, 'honeydew': { kcal: 36, unit: '100g' }, 'pineapple': { kcal: 50, unit: '100g' },
+    'mango': { kcal: 60, unit: '100g' }, 'papaya': { kcal: 43, unit: '100g' }, 'kiwi': { kcal: 61, unit: '100g' },
+    'pear': { kcal: 57, unit: '100g' }, 'peach': { kcal: 39, unit: '100g' }, 'plum': { kcal: 46, unit: '100g' },
+    'nectarine': { kcal: 44, unit: '100g' }, 'apricot': { kcal: 48, unit: '100g' }, 'cherry': { kcal: 50, unit: '100g' },
+    'grapefruit': { kcal: 42, unit: '100g' }, 'lemon': { kcal: 29, unit: '100g' }, 'lime': { kcal: 30, unit: '100g' },
+    'pomegranate': { kcal: 83, unit: '100g' }, 'fig': { kcal: 74, unit: '100g' }, 'date': { kcal: 282, unit: '100g' },
+    'avocado': { kcal: 160, unit: '100g' }, 'coconut': { kcal: 354, unit: '100g' }, 'coconut meat': { kcal: 354, unit: '100g' },
+    'persimmon': { kcal: 70, unit: '100g' }, 'passion fruit': { kcal: 97, unit: '100g' }, 'guava': { kcal: 68, unit: '100g' },
+    'lychee': { kcal: 66, unit: '100g' }, 'dragon fruit': { kcal: 60, unit: '100g' }, 'starfruit': { kcal: 31, unit: '100g' },
+    'cranberry': { kcal: 46, unit: '100g' }, 'raisins': { kcal: 299, unit: '100g' }, 'dried apricot': { kcal: 241, unit: '100g' },
+    'prune': { kcal: 240, unit: '100g' }, 'dried fig': { kcal: 249, unit: '100g' }, 'dried cranberry': { kcal: 308, unit: '100g' },
+    
+    // Nuts & Seeds
+    'almonds': { kcal: 579, unit: '100g' }, 'walnuts': { kcal: 654, unit: '100g' }, 'cashews': { kcal: 553, unit: '100g' },
+    'pecans': { kcal: 691, unit: '100g' }, 'pistachios': { kcal: 560, unit: '100g' }, 'hazelnuts': { kcal: 628, unit: '100g' },
+    'macadamia nuts': { kcal: 718, unit: '100g' }, 'brazil nuts': { kcal: 656, unit: '100g' }, 'pine nuts': { kcal: 673, unit: '100g' },
+    'peanuts': { kcal: 567, unit: '100g' }, 'peanut butter': { kcal: 588, unit: '100g' }, 'almond butter': { kcal: 614, unit: '100g' },
+    'cashew butter': { kcal: 587, unit: '100g' }, 'sunflower seeds': { kcal: 584, unit: '100g' }, 'pumpkin seeds': { kcal: 559, unit: '100g' },
+    'chia seeds': { kcal: 486, unit: '100g' }, 'flax seeds': { kcal: 534, unit: '100g' }, 'sesame seeds': { kcal: 573, unit: '100g' },
+    'hemp seeds': { kcal: 553, unit: '100g' }, 'poppy seeds': { kcal: 525, unit: '100g' }, 'tahini': { kcal: 595, unit: '100g' },
+    
+    // Oils & Fats
+    'olive oil': { kcal: 884, unit: '100ml' }, 'extra virgin olive oil': { kcal: 884, unit: '100ml' }, 'vegetable oil': { kcal: 884, unit: '100ml' },
+    'canola oil': { kcal: 884, unit: '100ml' }, 'sunflower oil': { kcal: 884, unit: '100ml' }, 'coconut oil': { kcal: 862, unit: '100ml' },
+    'avocado oil': { kcal: 884, unit: '100ml' }, 'sesame oil': { kcal: 884, unit: '100ml' }, 'peanut oil': { kcal: 884, unit: '100ml' },
+    'grapeseed oil': { kcal: 884, unit: '100ml' }, 'corn oil': { kcal: 884, unit: '100ml' }, 'soybean oil': { kcal: 884, unit: '100ml' },
+    'palm oil': { kcal: 884, unit: '100ml' }, 'lard': { kcal: 902, unit: '100g' }, 'tallow': { kcal: 902, unit: '100g' },
+    
+    // Condiments, Sauces & Seasonings
+    'salt': { kcal: 0, unit: '100g' }, 'black pepper': { kcal: 251, unit: '100g' }, 'white pepper': { kcal: 296, unit: '100g' },
+    'cayenne pepper': { kcal: 318, unit: '100g' }, 'paprika': { kcal: 282, unit: '100g' }, 'cumin': { kcal: 375, unit: '100g' },
+    'coriander': { kcal: 298, unit: '100g' }, 'turmeric': { kcal: 312, unit: '100g' },
+    'cinnamon': { kcal: 247, unit: '100g' }, 'nutmeg': { kcal: 525, unit: '100g' }, 'cloves': { kcal: 274, unit: '100g' },
+    'cardamom': { kcal: 311, unit: '100g' }, 'oregano': { kcal: 265, unit: '100g' }, 'basil': { kcal: 23, unit: '100g' },
+    'thyme': { kcal: 101, unit: '100g' }, 'rosemary': { kcal: 131, unit: '100g' }, 'sage': { kcal: 315, unit: '100g' },
+    'parsley': { kcal: 36, unit: '100g' }, 'cilantro': { kcal: 23, unit: '100g' }, 'dill': { kcal: 43, unit: '100g' },
+    'mint': { kcal: 44, unit: '100g' }, 'bay leaf': { kcal: 313, unit: '100g' }, 'vanilla extract': { kcal: 288, unit: '100ml' },
+    'mustard': { kcal: 66, unit: '100g' }, 'dijon mustard': { kcal: 66, unit: '100g' }, 'yellow mustard': { kcal: 66, unit: '100g' },
+    'ketchup': { kcal: 101, unit: '100g' }, 'mayonnaise': { kcal: 680, unit: '100g' }, 'bbq sauce': { kcal: 172, unit: '100g' },
+    'soy sauce': { kcal: 53, unit: '100ml' }, 'worcestershire sauce': { kcal: 78, unit: '100ml' }, 'fish sauce': { kcal: 35, unit: '100ml' },
+    'hot sauce': { kcal: 12, unit: '100ml' }, 'tabasco': { kcal: 12, unit: '100ml' }, 'sriracha': { kcal: 93, unit: '100g' },
+    'vinegar': { kcal: 18, unit: '100ml' }, 'white vinegar': { kcal: 18, unit: '100ml' }, 'apple cider vinegar': { kcal: 21, unit: '100ml' },
+    'balsamic vinegar': { kcal: 88, unit: '100ml' }, 'red wine vinegar': { kcal: 19, unit: '100ml' }, 'rice vinegar': { kcal: 18, unit: '100ml' },
+    'pesto': { kcal: 413, unit: '100g' }, 'marinara sauce': { kcal: 58, unit: '100g' }, 'alfredo sauce': { kcal: 220, unit: '100g' },
+    'teriyaki sauce': { kcal: 89, unit: '100g' }, 'hoisin sauce': { kcal: 220, unit: '100g' }, 'oyster sauce': { kcal: 51, unit: '100g' },
+    'chili sauce': { kcal: 104, unit: '100g' }, 'curry paste': { kcal: 112, unit: '100g' }, 'salsa': { kcal: 36, unit: '100g' },
+    'guacamole': { kcal: 150, unit: '100g' }, 'ranch dressing': { kcal: 456, unit: '100ml' }, 'caesar dressing': { kcal: 420, unit: '100ml' },
+    'italian dressing': { kcal: 340, unit: '100ml' }, 'french dressing': { kcal: 380, unit: '100ml' }, 'vinaigrette': { kcal: 400, unit: '100ml' },
+    
+    // Sweeteners & Sugar
+    'sugar': { kcal: 387, unit: '100g' }, 'white sugar': { kcal: 387, unit: '100g' }, 'brown sugar': { kcal: 380, unit: '100g' },
+    'powdered sugar': { kcal: 389, unit: '100g' }, 'honey': { kcal: 304, unit: '100g' }, 'maple syrup': { kcal: 260, unit: '100ml' },
+    'agave nectar': { kcal: 310, unit: '100g' }, 'corn syrup': { kcal: 286, unit: '100ml' }, 'molasses': { kcal: 290, unit: '100g' },
+    'stevia': { kcal: 0, unit: '100g' }, 'erythritol': { kcal: 0, unit: '100g' }, 'xylitol': { kcal: 240, unit: '100g' },
+    
+    // Chocolate & Sweets
+    'dark chocolate': { kcal: 546, unit: '100g' }, 'milk chocolate': { kcal: 535, unit: '100g' }, 'white chocolate': { kcal: 539, unit: '100g' },
+    'cocoa powder': { kcal: 228, unit: '100g' }, 'chocolate chips': { kcal: 479, unit: '100g' }, 'nutella': { kcal: 539, unit: '100g' },
+    
+    // Baking Ingredients
+    'baking powder': { kcal: 53, unit: '100g' }, 'baking soda': { kcal: 0, unit: '100g' }, 'yeast': { kcal: 325, unit: '100g' },
+    'cornstarch': { kcal: 381, unit: '100g' }, 'gelatin': { kcal: 335, unit: '100g' }, 'cream of tartar': { kcal: 258, unit: '100g' },
+    
+    // Beverages
+    'coffee': { kcal: 2, unit: '100ml' }, 'black coffee': { kcal: 2, unit: '100ml' }, 'espresso': { kcal: 9, unit: '100ml' },
+    'tea': { kcal: 1, unit: '100ml' }, 'green tea': { kcal: 1, unit: '100ml' }, 'black tea': { kcal: 1, unit: '100ml' },
+    'orange juice': { kcal: 45, unit: '100ml' }, 'apple juice': { kcal: 46, unit: '100ml' }, 'grape juice': { kcal: 60, unit: '100ml' },
+    'cranberry juice': { kcal: 46, unit: '100ml' }, 'tomato juice': { kcal: 17, unit: '100ml' }, 'lemonade': { kcal: 40, unit: '100ml' },
+    'cola': { kcal: 41, unit: '100ml' }, 'beer': { kcal: 43, unit: '100ml' }, 'red wine': { kcal: 85, unit: '100ml' },
+    'white wine': { kcal: 82, unit: '100ml' }, 'vodka': { kcal: 231, unit: '100ml' }, 'whiskey': { kcal: 250, unit: '100ml' },
+    'rum': { kcal: 231, unit: '100ml' }, 'gin': { kcal: 263, unit: '100ml' }, 'tequila': { kcal: 231, unit: '100ml' },
+    
+    // Canned & Preserved
+    'canned tomatoes': { kcal: 32, unit: '100g' }, 'tomato puree': { kcal: 38, unit: '100g' }, 'coconut cream': { kcal: 330, unit: '100ml' },
+    'evaporated milk': { kcal: 134, unit: '100ml' }, 'condensed milk': { kcal: 321, unit: '100ml' }, 'pickles': { kcal: 11, unit: '100g' },
+    'olives': { kcal: 115, unit: '100g' }, 'green olives': { kcal: 145, unit: '100g' }, 'black olives': { kcal: 115, unit: '100g' },
+    'capers': { kcal: 23, unit: '100g' }, 'kimchi': { kcal: 15, unit: '100g' }, 'sauerkraut': { kcal: 19, unit: '100g' },
+    
+    // Snacks & Processed Foods
+    'potato chips': { kcal: 536, unit: '100g' }, 'tortilla chips': { kcal: 503, unit: '100g' }, 'popcorn': { kcal: 375, unit: '100g' },
+    'pretzels': { kcal: 380, unit: '100g' }, 'crackers': { kcal: 502, unit: '100g' }, 'cookies': { kcal: 502, unit: '100g' },
+    'cake': { kcal: 257, unit: '100g' }, 'brownie': { kcal: 466, unit: '100g' }, 'donut': { kcal: 452, unit: '100g' },
+    'muffin': { kcal: 377, unit: '100g' }, 'cupcake': { kcal: 305, unit: '100g' }, 'pie': { kcal: 237, unit: '100g' },
+    'pizza': { kcal: 266, unit: '100g' }, 'hamburger': { kcal: 295, unit: '100g' }, 'french fries': { kcal: 312, unit: '100g' },
+    'fried chicken': { kcal: 246, unit: '100g' }, 'chicken nuggets': { kcal: 296, unit: '100g' }, 'fish sticks': { kcal: 282, unit: '100g' },
+    
+    // Asian Ingredients
+    'sushi rice': { kcal: 130, unit: '100g' }, 'miso paste': { kcal: 199, unit: '100g' }, 'tofu skin': { kcal: 386, unit: '100g' },
+    'rice paper': { kcal: 333, unit: '100g' }, 'wonton wrapper': { kcal: 291, unit: '100g' }, 'udon noodles': { kcal: 99, unit: '100g' },
+    'ramen noodles': { kcal: 436, unit: '100g' }, 'soba noodles': { kcal: 99, unit: '100g' }, 'glass noodles': { kcal: 351, unit: '100g' },
+    'panko': { kcal: 395, unit: '100g' }, 'wasabi': { kcal: 109, unit: '100g' }, 'pickled ginger': { kcal: 51, unit: '100g' },
+    
+    // Middle Eastern & Mediterranean
+    'couscous pearls': { kcal: 376, unit: '100g' }, 'falafel': { kcal: 333, unit: '100g' }, 'baba ganoush': { kcal: 110, unit: '100g' },
+    'tzatziki': { kcal: 76, unit: '100g' }, 'halloumi': { kcal: 321, unit: '100g' }, 'labneh': { kcal: 88, unit: '100g' },
+    'pita bread': { kcal: 275, unit: '100g' }, 'lavash': { kcal: 277, unit: '100g' }, 'grape leaves': { kcal: 69, unit: '100g' },
+    'sumac': { kcal: 329, unit: '100g' }, 'za\'atar': { kcal: 286, unit: '100g' }, 'harissa': { kcal: 70, unit: '100g' },
+    
+    // Mexican & Latin American
+    'refried beans': { kcal: 92, unit: '100g' }, 'black bean paste': { kcal: 130, unit: '100g' }, 'queso fresco': { kcal: 321, unit: '100g' },
+    'cotija cheese': { kcal: 376, unit: '100g' }, 'chipotle': { kcal: 281, unit: '100g' }, 'adobo sauce': { kcal: 58, unit: '100g' },
+    'plantain': { kcal: 122, unit: '100g' }, 'yuca': { kcal: 159, unit: '100g' }, 'tomatillo': { kcal: 32, unit: '100g' },
+    'poblano pepper': { kcal: 20, unit: '100g' }, 'serrano pepper': { kcal: 32, unit: '100g' }, 'epazote': { kcal: 32, unit: '100g' },
+    
+    // Polish Ingredients
+    'kielbasa': { kcal: 301, unit: '100g' }, 'pierogi': { kcal: 186, unit: '100g' }, 'sauerkraut cabbage': { kcal: 19, unit: '100g' },
+    'polish sausage': { kcal: 301, unit: '100g' }, 'smoked sausage': { kcal: 346, unit: '100g' }, 'polish ham': { kcal: 145, unit: '100g' },
+    'buckwheat groats': { kcal: 343, unit: '100g' }, 'beetroot': { kcal: 43, unit: '100g' }, 'horseradish': { kcal: 48, unit: '100g' },
+    'curd cheese': { kcal: 98, unit: '100g' }, 'farmer cheese': { kcal: 98, unit: '100g' }, 'oscypek': { kcal: 372, unit: '100g' },
+    'rye bread dark': { kcal: 259, unit: '100g' }, 'pumpernickel': { kcal: 250, unit: '100g' }, 'polish mustard': { kcal: 66, unit: '100g' },
+    
+    // Protein Powders & Supplements
+    'whey protein': { kcal: 400, unit: '100g' }, 'casein protein': { kcal: 373, unit: '100g' }, 'pea protein': { kcal: 390, unit: '100g' },
+    'soy protein isolate': { kcal: 338, unit: '100g' }, 'collagen powder': { kcal: 335, unit: '100g' }, 'spirulina': { kcal: 290, unit: '100g' },
+    'nutritional yeast': { kcal: 325, unit: '100g' }, 'wheat germ': { kcal: 360, unit: '100g' }, 'brewer\'s yeast': { kcal: 325, unit: '100g' },
+    
+    // Specialty & Gourmet
+    'truffle oil': { kcal: 884, unit: '100ml' }, 'caviar': { kcal: 264, unit: '100g' }, 'foie gras': { kcal: 462, unit: '100g' },
+    'prosciutto di parma': { kcal: 217, unit: '100g' }, 'jamón ibérico': { kcal: 375, unit: '100g' }, 'gruyere': { kcal: 413, unit: '100g' },
+    'aged cheddar': { kcal: 403, unit: '100g' }, 'pecorino romano': { kcal: 387, unit: '100g' }, 'gorgonzola': { kcal: 353, unit: '100g' },
+    'camembert': { kcal: 300, unit: '100g' }, 'roquefort': { kcal: 369, unit: '100g' }, 'manchego': { kcal: 392, unit: '100g' },
+  });
+  
+  const [showAddRecipe, setShowAddRecipe] = useState(false);
+  const [showAddIngredient, setShowAddIngredient] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedTag, setSelectedTag] = useState('all');
+  
+  const [newRecipe, setNewRecipe] = useState({
+    name: '',
+    categories: [],
+    tags: [],
+    ingredients: [],
+    steps: [''],
+  });
+  
+  const [newIngredient, setNewIngredient] = useState({
+    name: '',
+    kcal: '',
+    unit: '100g',
+  });
+  
+  const [recipeIngredient, setRecipeIngredient] = useState({
+    name: '',
+    amount: '',
+    unit: 'g',
+  });
+
+  const allCategories = useMemo(() => {
+    const cats = new Set();
+    recipes.forEach(r => r.categories.forEach(c => cats.add(c)));
+    return Array.from(cats).sort();
+  }, [recipes]);
+
+  const allTags = useMemo(() => {
+    const tags = new Set();
+    recipes.forEach(r => r.tags.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
+  }, [recipes]);
+
+  const calculateRecipeCalories = (recipeIngredients) => {
+    return recipeIngredients.reduce((total, ing) => {
+      const baseIng = ingredients[ing.name.toLowerCase()];
+      if (!baseIng) return total;
+      
+      const multiplier = ing.unit === 'ml' ? 
+        (ing.amount / 100) : 
+        (ing.amount / 100);
+      
+      return total + (baseIng.kcal * multiplier);
+    }, 0);
+  };
+
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter(recipe => {
+      const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.ingredients.some(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCategory = selectedCategory === 'all' || recipe.categories.includes(selectedCategory);
+      const matchesTag = selectedTag === 'all' || recipe.tags.includes(selectedTag);
+      return matchesSearch && matchesCategory && matchesTag;
+    });
+  }, [recipes, searchTerm, selectedCategory, selectedTag]);
+
+  const addRecipeIngredient = () => {
+    if (recipeIngredient.name && recipeIngredient.amount) {
+      setNewRecipe({
+        ...newRecipe,
+        ingredients: [...newRecipe.ingredients, { ...recipeIngredient }]
+      });
+      setRecipeIngredient({ name: '', amount: '', unit: 'g' });
+    }
+  };
+
+  const saveRecipe = () => {
+    if (newRecipe.name && newRecipe.ingredients.length > 0) {
+      const totalCalories = calculateRecipeCalories(newRecipe.ingredients);
+      const recipeToSave = {
+        ...newRecipe,
+        id: editingRecipe?.id || Date.now(),
+        totalCalories: Math.round(totalCalories),
+        createdAt: editingRecipe?.createdAt || new Date().toISOString(),
+      };
+      
+      if (editingRecipe) {
+        setRecipes(recipes.map(r => r.id === editingRecipe.id ? recipeToSave : r));
+        setEditingRecipe(null);
+      } else {
+        setRecipes([...recipes, recipeToSave]);
+      }
+      
+      setNewRecipe({ name: '', categories: [], tags: [], ingredients: [], steps: [''] });
+      setShowAddRecipe(false);
+    }
+  };
+
+  const addIngredientToDatabase = () => {
+    if (newIngredient.name && newIngredient.kcal) {
+      setIngredients({
+        ...ingredients,
+        [newIngredient.name.toLowerCase()]: {
+          kcal: parseFloat(newIngredient.kcal),
+          unit: newIngredient.unit,
+        }
+      });
+      setNewIngredient({ name: '', kcal: '', unit: '100g' });
+      setShowAddIngredient(false);
+    }
+  };
+
+  const startEdit = (recipe) => {
+    setEditingRecipe(recipe);
+    setNewRecipe({
+      name: recipe.name,
+      categories: [...recipe.categories],
+      tags: [...recipe.tags],
+      ingredients: [...recipe.ingredients],
+      steps: [...recipe.steps],
+    });
+    setShowAddRecipe(true);
+  };
+
+  const deleteRecipe = (id) => {
+    if (window.confirm('Are you sure you want to delete this recipe?')) {
+      setRecipes(recipes.filter(r => r.id !== id));
+    }
+  };
+
+  const addCategory = (cat) => {
+    if (cat && !newRecipe.categories.includes(cat)) {
+      setNewRecipe({ ...newRecipe, categories: [...newRecipe.categories, cat] });
+    }
+  };
+
+  const addTag = (tag) => {
+    if (tag && !newRecipe.tags.includes(tag)) {
+      setNewRecipe({ ...newRecipe, tags: [...newRecipe.tags, tag] });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <ChefHat className="w-10 h-10 text-orange-600" />
+              <h1 className="text-4xl font-bold text-gray-800">Recipe Mind Map</h1>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAddIngredient(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Ingredient
+              </button>
+              <button
+                onClick={() => setShowAddRecipe(true)}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                New Recipe
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-64">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search recipes or ingredients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+            
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">All Categories</option>
+              {allCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">All Tags</option>
+              {allTags.map(tag => (
+                <option key={tag} value={tag}>#{tag}</option>
+              ))}
+            </select>
+          </div>
+        </header>
+
+        {/* Add/Edit Recipe Modal */}
+        {showAddRecipe && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl my-8">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {editingRecipe ? 'Edit Recipe' : 'New Recipe'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowAddRecipe(false);
+                    setEditingRecipe(null);
+                    setNewRecipe({ name: '', categories: [], tags: [], ingredients: [], steps: [''] });
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
+                  <input
+                    type="text"
+                    value={newRecipe.name}
+                    onChange={(e) => setNewRecipe({ ...newRecipe, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="e.g., Traditional Carbonara"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          addCategory(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Add category (press Enter)"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {newRecipe.categories.map((cat, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-1">
+                        {cat}
+                        <button onClick={() => setNewRecipe({ ...newRecipe, categories: newRecipe.categories.filter((_, i) => i !== idx) })}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          addTag(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Add tag (press Enter)"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {newRecipe.tags.map((tag, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
+                        #{tag}
+                        <button onClick={() => setNewRecipe({ ...newRecipe, tags: newRecipe.tags.filter((_, i) => i !== idx) })}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
+                  <div className="flex gap-2 mb-2">
+                    <select
+                      value={recipeIngredient.name}
+                      onChange={(e) => setRecipeIngredient({ ...recipeIngredient, name: e.target.value })}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="">Select ingredient</option>
+                      {Object.keys(ingredients).sort().map(ing => (
+                        <option key={ing} value={ing}>{ing}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={recipeIngredient.amount}
+                      onChange={(e) => setRecipeIngredient({ ...recipeIngredient, amount: e.target.value })}
+                      placeholder="Amount"
+                      className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    <select
+                      value={recipeIngredient.unit}
+                      onChange={(e) => setRecipeIngredient({ ...recipeIngredient, unit: e.target.value })}
+                      className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="g">g</option>
+                      <option value="ml">ml</option>
+                    </select>
+                    <button
+                      onClick={addRecipeIngredient}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {newRecipe.ingredients.map((ing, idx) => {
+                      const baseIng = ingredients[ing.name.toLowerCase()];
+                      const ingCalories = baseIng ? Math.round((ing.amount / 100) * baseIng.kcal) : 0;
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm">
+                            {ing.name} - {ing.amount}{ing.unit} ({ingCalories} kcal)
+                          </span>
+                          <button
+                            onClick={() => setNewRecipe({ ...newRecipe, ingredients: newRecipe.ingredients.filter((_, i) => i !== idx) })}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {newRecipe.ingredients.length > 0 && (
+                    <div className="mt-2 p-2 bg-orange-50 rounded text-sm font-medium text-orange-700">
+                      Total: {Math.round(calculateRecipeCalories(newRecipe.ingredients))} kcal
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Steps</label>
+                  {newRecipe.steps.map((step, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <span className="text-gray-500 font-medium pt-2">{idx + 1}.</span>
+                      <textarea
+                        value={step}
+                        onChange={(e) => {
+                          const newSteps = [...newRecipe.steps];
+                          newSteps[idx] = e.target.value;
+                          setNewRecipe({ ...newRecipe, steps: newSteps });
+                        }}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        rows="2"
+                        placeholder="Describe this step..."
+                      />
+                      {idx > 0 && (
+                        <button
+                          onClick={() => setNewRecipe({ ...newRecipe, steps: newRecipe.steps.filter((_, i) => i !== idx) })}
+                          className="text-red-500 hover:text-red-700 pt-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setNewRecipe({ ...newRecipe, steps: [...newRecipe.steps, ''] })}
+                    className="text-sm text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add step
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowAddRecipe(false);
+                    setEditingRecipe(null);
+                    setNewRecipe({ name: '', categories: [], tags: [], ingredients: [], steps: [''] });
+                  }}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveRecipe}
+                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {editingRecipe ? 'Update Recipe' : 'Save Recipe'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Ingredient Modal */}
+        {showAddIngredient && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">Add Ingredient to Database</h2>
+                <button onClick={() => setShowAddIngredient(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ingredient Name</label>
+                  <input
+                    type="text"
+                    value={newIngredient.name}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., parmesan cheese"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Calories per 100g/100ml</label>
+                  <input
+                    type="number"
+                    value={newIngredient.kcal}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, kcal: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 431"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Unit Type</label>
+                  <select
+                    value={newIngredient.unit}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, unit: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="100g">100g (solid)</option>
+                    <option value="100ml">100ml (liquid)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
+                <button
+                  onClick={() => setShowAddIngredient(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addIngredientToDatabase}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Add Ingredient
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recipe Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRecipes.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-gray-500">
+              {recipes.length === 0 ? (
+                <>
+                  <ChefHat className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg">No recipes yet. Start by adding your first recipe!</p>
+                </>
+              ) : (
+                <p className="text-lg">No recipes match your filters.</p>
+              )}
+            </div>
+          ) : (
+            filteredRecipes.map(recipe => (
+              <div key={recipe.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold text-gray-800">{recipe.name}</h3>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => startEdit(recipe)}
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteRecipe(recipe.id)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {recipe.categories.map((cat, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {recipe.tags.map((tag, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs flex items-center gap-1">
+                          <Tag className="w-3 h-3" />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Ingredients:</h4>
+                    <div className="space-y-1">
+                      {recipe.ingredients.map((ing, idx) => {
+                        const baseIng = ingredients[ing.name.toLowerCase()];
+                        const ingCalories = baseIng ? Math.round((ing.amount / 100) * baseIng.kcal) : 0;
+                        return (
+                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                            <span>{ing.name}: {ing.amount}{ing.unit}</span>
+                            <span className="text-orange-600 font-medium">{ingCalories} kcal</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Steps:</h4>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                      {recipe.steps.map((step, idx) => (
+                        step && <li key={idx}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">Total Calories</span>
+                      <span className="text-lg font-bold text-orange-600">{recipe.totalCalories} kcal</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Ingredient Database Quick View */}
+        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Ingredient Database ({Object.keys(ingredients).length} items)</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto">
+            {Object.entries(ingredients).sort().map(([name, data]) => (
+              <div key={name} className="p-2 bg-gray-50 rounded text-sm">
+                <div className="font-medium capitalize">{name}</div>
+                <div className="text-gray-600">{data.kcal} kcal per {data.unit}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RecipeManager;
