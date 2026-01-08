@@ -384,5 +384,5 @@ const INGREDIENTS_DB = {
     "cilantro": {"kcal": 23, "unit": "100g"},
     "dill": {"kcal": 43, "unit": "100g"},
     "mint": {"kcal": 44, "unit": "100g"},
-    "bay leaf": {"kcal": 313, "unit": "100g"},
-    "
+    "bay leaf": {"kcal": 313, "unit": "100g"}
+};
