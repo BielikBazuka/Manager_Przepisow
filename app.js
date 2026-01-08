@@ -2,12 +2,27 @@
 const app = {
     recipes: [],
     ingredients: {},
+    customIngredients: {},
     currentRecipe: null,
     editingRecipe: null,
 
     init() {
         // Load ingredients from ingredients.js
-        this.ingredients = INGREDIENTS_DB || {};
+        if (typeof INGREDIENTS_DB !== 'undefined') {
+            this.ingredients = {...INGREDIENTS_DB};
+            console.log('Loaded', Object.keys(this.ingredients).length, 'ingredients from database');
+        } else {
+            console.error('INGREDIENTS_DB not found! Make sure ingredients.js is loaded.');
+            this.ingredients = {};
+        }
+        
+        // Load custom ingredients from localStorage
+        const savedCustomIngredients = localStorage.getItem('customIngredients');
+        if (savedCustomIngredients) {
+            this.customIngredients = JSON.parse(savedCustomIngredients);
+            this.ingredients = {...this.ingredients, ...this.customIngredients};
+            console.log('Loaded', Object.keys(this.customIngredients).length, 'custom ingredients');
+        }
         
         // Load recipes from localStorage
         const saved = localStorage.getItem('recipes');
@@ -36,12 +51,15 @@ const app = {
     // Save recipes to localStorage
     saveToStorage() {
         localStorage.setItem('recipes', JSON.stringify(this.recipes));
-        localStorage.setItem('ingredients', JSON.stringify(this.ingredients));
+        // Only save custom ingredients, not the whole database
+        localStorage.setItem('customIngredients', JSON.stringify(this.customIngredients));
     },
 
     // Populate ingredient dropdown
     populateIngredientSelect() {
         const select = document.getElementById('ingredientSelect');
+        if (!select) return;
+        
         select.innerHTML = '<option value="">Wybierz składnik</option>';
         
         Object.keys(this.ingredients).sort().forEach(name => {
@@ -64,23 +82,27 @@ const app = {
         
         // Update category filter
         const categoryFilter = document.getElementById('categoryFilter');
-        categoryFilter.innerHTML = '<option value="all">Wszystkie kategorie</option>';
-        Array.from(categories).sort().forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            categoryFilter.appendChild(option);
-        });
+        if (categoryFilter) {
+            categoryFilter.innerHTML = '<option value="all">Wszystkie kategorie</option>';
+            Array.from(categories).sort().forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categoryFilter.appendChild(option);
+            });
+        }
         
         // Update tag filter
         const tagFilter = document.getElementById('tagFilter');
-        tagFilter.innerHTML = '<option value="all">Wszystkie tagi</option>';
-        Array.from(tags).sort().forEach(tag => {
-            const option = document.createElement('option');
-            option.value = tag;
-            option.textContent = `#${tag}`;
-            tagFilter.appendChild(option);
-        });
+        if (tagFilter) {
+            tagFilter.innerHTML = '<option value="all">Wszystkie tagi</option>';
+            Array.from(tags).sort().forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = `#${tag}`;
+                tagFilter.appendChild(option);
+            });
+        }
     },
 
     // Filter recipes
@@ -115,6 +137,7 @@ const app = {
     // Render recipes
     renderRecipes(recipesToRender = this.recipes) {
         const grid = document.getElementById('recipesGrid');
+        if (!grid) return;
         
         if (recipesToRender.length === 0) {
             grid.innerHTML = `
@@ -175,7 +198,10 @@ const app = {
         const list = document.getElementById('ingredientsList');
         const count = document.getElementById('ingredientCount');
         
-        count.textContent = Object.keys(this.ingredients).length;
+        if (!list || !count) return;
+        
+        const totalCount = Object.keys(this.ingredients).length;
+        count.textContent = totalCount;
         
         list.innerHTML = Object.entries(this.ingredients)
             .sort(([a], [b]) => a.localeCompare(b))
@@ -513,7 +539,10 @@ const app = {
             return;
         }
         
+        // Add to both ingredients and customIngredients
         this.ingredients[name] = { kcal, unit };
+        this.customIngredients[name] = { kcal, unit };
+        
         this.saveToStorage();
         this.populateIngredientSelect();
         this.renderIngredientDatabase();
