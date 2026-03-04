@@ -6,7 +6,7 @@ const app = {
     editingRecipe: null,
 
     // ─── JSONBin config ────────────────────────────────────────────────────────
-    BIN_ID:  '69a81141d0ea881f40edc933',   // e.g. '6642f3e9acd3cb34a83f1234'
+    BIN_ID:  '69a8151943b1c97be9b26a81
     API_KEY: '$2a$10$mSZ34uDjWfYsW2LhVV44i.r8ZC4g0IouOa4/JyeZfZcQkllXhM/Vq',  // e.g. '$2a$10$...'
     get BIN_URL() {
         return `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
@@ -493,5 +493,6 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => { app.init(); });
+
 
 
