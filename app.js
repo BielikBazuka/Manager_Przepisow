@@ -2,64 +2,84 @@
 const app = {
     recipes: [],
     ingredients: {},
-    customIngredients: {},
     currentRecipe: null,
     editingRecipe: null,
 
-    init() {
-        // Load ingredients from ingredients.js
-        if (typeof INGREDIENTS_DB !== 'undefined') {
-            this.ingredients = {...INGREDIENTS_DB};
-            console.log('Loaded', Object.keys(this.ingredients).length, 'ingredients from database');
-        } else {
-            console.error('INGREDIENTS_DB not found! Make sure ingredients.js is loaded.');
-            this.ingredients = {};
+    // ─── JSONBin config ────────────────────────────────────────────────────────
+    BIN_ID:  'YOUR_BIN_ID_HERE',   // e.g. '6642f3e9acd3cb34a83f1234'
+    API_KEY: 'YOUR_API_KEY_HERE',  // e.g. '$2a$10$...'
+    get BIN_URL() {
+        return `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
+    },
+    // ──────────────────────────────────────────────────────────────────────────
+
+    async init() {
+        // Load ingredients from ingredients.js as fallback base
+        this.ingredients = { ...INGREDIENTS_DB } || {};
+
+        // Show loading state
+        document.getElementById('recipesGrid').innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">⏳</div>
+                <p>Ładowanie przepisów...</p>
+            </div>`;
+
+        // Load from JSONBin (shared across all devices)
+        try {
+            const res = await fetch(this.BIN_URL + '/latest', {
+                headers: { 'X-Master-Key': this.API_KEY }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const record = data.record;
+
+            if (record.recipes)    this.recipes     = record.recipes;
+            if (record.ingredients) this.ingredients = { ...this.ingredients, ...record.ingredients };
+
+        } catch (err) {
+            console.error('JSONBin load failed:', err);
+            alert('Nie udało się załadować danych. Sprawdź połączenie lub konfigurację JSONBin.');
         }
-        
-        // Load custom ingredients from localStorage
-        const savedCustomIngredients = localStorage.getItem('customIngredients');
-        if (savedCustomIngredients) {
-            this.customIngredients = JSON.parse(savedCustomIngredients);
-            this.ingredients = {...this.ingredients, ...this.customIngredients};
-            console.log('Loaded', Object.keys(this.customIngredients).length, 'custom ingredients');
-        }
-        
-        // Load recipes from localStorage
-        const saved = localStorage.getItem('recipes');
-        if (saved) {
-            this.recipes = JSON.parse(saved);
-        }
-        
+
         // Populate ingredient select
         this.populateIngredientSelect();
-        
+
         // Render everything
         this.renderRecipes();
         this.renderIngredientDatabase();
         this.updateFilters();
-        
-        // Add first step by default
-        this.currentRecipe = {
-            name: '',
-            categories: [],
-            tags: [],
-            ingredients: [],
-            steps: ['']
-        };
+
+        // Default current recipe
+        this.currentRecipe = { name: '', categories: [], tags: [], ingredients: [], steps: [''] };
     },
 
-    // Save recipes to localStorage
-    saveToStorage() {
-        localStorage.setItem('recipes', JSON.stringify(this.recipes));
-        // Only save custom ingredients, not the whole database
-        localStorage.setItem('customIngredients', JSON.stringify(this.customIngredients));
+    // Save recipes to JSONBin (replaces localStorage)
+    async saveToStorage() {
+        // Only save user-added ingredients (not the base INGREDIENTS_DB ones)
+        const userIngredients = {};
+        for (const [key, val] of Object.entries(this.ingredients)) {
+            if (!INGREDIENTS_DB[key]) userIngredients[key] = val;
+        }
+
+        try {
+            const res = await fetch(this.BIN_URL, {
+                method:  'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': this.API_KEY
+                },
+                body: JSON.stringify({ recipes: this.recipes, ingredients: userIngredients })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        } catch (err) {
+            console.error('JSONBin save failed:', err);
+            alert('Nie udało się zapisać danych. Sprawdź połączenie.');
+        }
     },
 
     // Populate ingredient dropdown
     populateIngredientSelect() {
         const select = document.getElementById('ingredientSelect');
-        if (!select) return;
-        
         select.innerHTML = '<option value="">Wybierz składnik</option>';
         
         Object.keys(this.ingredients).sort().forEach(name => {
@@ -80,29 +100,23 @@ const app = {
             recipe.tags.forEach(tag => tags.add(tag));
         });
         
-        // Update category filter
         const categoryFilter = document.getElementById('categoryFilter');
-        if (categoryFilter) {
-            categoryFilter.innerHTML = '<option value="all">Wszystkie kategorie</option>';
-            Array.from(categories).sort().forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                categoryFilter.appendChild(option);
-            });
-        }
+        categoryFilter.innerHTML = '<option value="all">Wszystkie kategorie</option>';
+        Array.from(categories).sort().forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            categoryFilter.appendChild(option);
+        });
         
-        // Update tag filter
         const tagFilter = document.getElementById('tagFilter');
-        if (tagFilter) {
-            tagFilter.innerHTML = '<option value="all">Wszystkie tagi</option>';
-            Array.from(tags).sort().forEach(tag => {
-                const option = document.createElement('option');
-                option.value = tag;
-                option.textContent = `#${tag}`;
-                tagFilter.appendChild(option);
-            });
-        }
+        tagFilter.innerHTML = '<option value="all">Wszystkie tagi</option>';
+        Array.from(tags).sort().forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = `#${tag}`;
+            tagFilter.appendChild(option);
+        });
     },
 
     // Filter recipes
@@ -116,7 +130,6 @@ const app = {
                 recipe.ingredients.some(ing => ing.name.toLowerCase().includes(searchTerm));
             const matchesCategory = categoryFilter === 'all' || recipe.categories.includes(categoryFilter);
             const matchesTag = tagFilter === 'all' || recipe.tags.includes(tagFilter);
-            
             return matchesSearch && matchesCategory && matchesTag;
         });
         
@@ -128,7 +141,6 @@ const app = {
         return ingredients.reduce((total, ing) => {
             const baseIng = this.ingredients[ing.name.toLowerCase()];
             if (!baseIng) return total;
-            
             const multiplier = ing.amount / 100;
             return total + (baseIng.kcal * multiplier);
         }, 0);
@@ -137,15 +149,13 @@ const app = {
     // Render recipes
     renderRecipes(recipesToRender = this.recipes) {
         const grid = document.getElementById('recipesGrid');
-        if (!grid) return;
         
         if (recipesToRender.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state" style="grid-column: 1 / -1;">
                     <div class="empty-state-icon">🍽️</div>
                     <p>${this.recipes.length === 0 ? 'Brak przepisów. Dodaj swój pierwszy przepis!' : 'Nie znaleziono przepisów.'}</p>
-                </div>
-            `;
+                </div>`;
             return;
         }
         
@@ -174,21 +184,16 @@ const app = {
                             <div class="ingredient-item">
                                 <span class="ingredient-name">${ing.name}: ${ing.amount}${ing.unit}</span>
                                 <span class="ingredient-calories">${calories} kcal</span>
-                            </div>
-                        `;
+                            </div>`;
                     }).join('')}
                 </div>
                 
                 <div class="steps-section">
                     <h4>👨‍🍳 Przygotowanie:</h4>
-                    <ol>
-                        ${recipe.steps.filter(s => s).map(step => `<li>${step}</li>`).join('')}
-                    </ol>
+                    <ol>${recipe.steps.filter(s => s).map(step => `<li>${step}</li>`).join('')}</ol>
                 </div>
                 
-                <div class="total-calories">
-                    🔥 Razem: ${recipe.totalCalories} kcal
-                </div>
+                <div class="total-calories">🔥 Razem: ${recipe.totalCalories} kcal</div>
             </div>
         `).join('');
     },
@@ -198,10 +203,7 @@ const app = {
         const list = document.getElementById('ingredientsList');
         const count = document.getElementById('ingredientCount');
         
-        if (!list || !count) return;
-        
-        const totalCount = Object.keys(this.ingredients).length;
-        count.textContent = totalCount;
+        count.textContent = Object.keys(this.ingredients).length;
         
         list.innerHTML = Object.entries(this.ingredients)
             .sort(([a], [b]) => a.localeCompare(b))
@@ -216,13 +218,7 @@ const app = {
     // Show add recipe modal
     showAddRecipe() {
         this.editingRecipe = null;
-        this.currentRecipe = {
-            name: '',
-            categories: [],
-            tags: [],
-            ingredients: [],
-            steps: ['']
-        };
+        this.currentRecipe = { name: '', categories: [], tags: [], ingredients: [], steps: [''] };
         
         document.getElementById('modalTitle').textContent = 'Nowy przepis';
         document.getElementById('recipeName').value = '';
@@ -235,16 +231,13 @@ const app = {
         document.getElementById('recipeModal').classList.add('active');
     },
 
-    // Close recipe modal
     closeRecipeModal() {
         document.getElementById('recipeModal').classList.remove('active');
     },
 
-    // Add category
     addCategory() {
         const input = document.getElementById('categoryInput');
         const value = input.value.trim();
-        
         if (value && !this.currentRecipe.categories.includes(value)) {
             this.currentRecipe.categories.push(value);
             this.renderCategories();
@@ -252,13 +245,11 @@ const app = {
         }
     },
 
-    // Remove category
     removeCategory(index) {
         this.currentRecipe.categories.splice(index, 1);
         this.renderCategories();
     },
 
-    // Render categories
     renderCategories() {
         const list = document.getElementById('categoriesList');
         list.innerHTML = this.currentRecipe.categories.map((cat, i) => `
@@ -269,11 +260,9 @@ const app = {
         `).join('');
     },
 
-    // Add tag
     addTag() {
         const input = document.getElementById('tagInput');
         const value = input.value.trim();
-        
         if (value && !this.currentRecipe.tags.includes(value)) {
             this.currentRecipe.tags.push(value);
             this.renderTags();
@@ -281,13 +270,11 @@ const app = {
         }
     },
 
-    // Remove tag
     removeTag(index) {
         this.currentRecipe.tags.splice(index, 1);
         this.renderTags();
     },
 
-    // Render tags
     renderTags() {
         const list = document.getElementById('tagsList');
         list.innerHTML = this.currentRecipe.tags.map((tag, i) => `
@@ -298,7 +285,6 @@ const app = {
         `).join('');
     },
 
-    // Add ingredient
     addIngredient() {
         const name = document.getElementById('ingredientSelect').value;
         const amount = document.getElementById('ingredientAmount').value;
@@ -307,19 +293,16 @@ const app = {
         if (name && amount) {
             this.currentRecipe.ingredients.push({ name, amount: parseFloat(amount), unit });
             this.renderIngredients();
-            
             document.getElementById('ingredientSelect').value = '';
             document.getElementById('ingredientAmount').value = '';
         }
     },
 
-    // Remove ingredient
     removeIngredient(index) {
         this.currentRecipe.ingredients.splice(index, 1);
         this.renderIngredients();
     },
 
-    // Render ingredients
     renderIngredients() {
         const list = document.getElementById('ingredientItems');
         const totalDiv = document.getElementById('totalCalories');
@@ -327,28 +310,22 @@ const app = {
         list.innerHTML = this.currentRecipe.ingredients.map((ing, i) => {
             const baseIng = this.ingredients[ing.name.toLowerCase()];
             const calories = baseIng ? Math.round((ing.amount / 100) * baseIng.kcal) : 0;
-            
             return `
                 <div class="ingredient-item-edit">
                     <span>${ing.name} - ${ing.amount}${ing.unit} (${calories} kcal)</span>
                     <button class="icon-btn" onclick="app.removeIngredient(${i})">🗑️</button>
-                </div>
-            `;
+                </div>`;
         }).join('');
         
         const total = Math.round(this.calculateCalories(this.currentRecipe.ingredients));
-        totalDiv.innerHTML = this.currentRecipe.ingredients.length > 0 
-            ? `🔥 Razem: ${total} kcal` 
-            : '';
+        totalDiv.innerHTML = this.currentRecipe.ingredients.length > 0 ? `🔥 Razem: ${total} kcal` : '';
     },
 
-    // Add step
     addStep() {
         this.currentRecipe.steps.push('');
         this.renderSteps();
     },
 
-    // Remove step
     removeStep(index) {
         if (this.currentRecipe.steps.length > 1) {
             this.currentRecipe.steps.splice(index, 1);
@@ -356,12 +333,10 @@ const app = {
         }
     },
 
-    // Update step
     updateStep(index, value) {
         this.currentRecipe.steps[index] = value;
     },
 
-    // Render steps
     renderSteps() {
         const list = document.getElementById('stepsList');
         list.innerHTML = this.currentRecipe.steps.map((step, i) => `
@@ -377,29 +352,22 @@ const app = {
         `).join('');
     },
 
-    // Save recipe
-    saveRecipe() {
+    // Save recipe — now async because saveToStorage is async
+    async saveRecipe() {
         const name = document.getElementById('recipeName').value.trim();
         
-        if (!name) {
-            alert('Podaj nazwę przepisu!');
-            return;
-        }
-        
-        if (this.currentRecipe.ingredients.length === 0) {
-            alert('Dodaj przynajmniej jeden składnik!');
-            return;
-        }
+        if (!name) { alert('Podaj nazwę przepisu!'); return; }
+        if (this.currentRecipe.ingredients.length === 0) { alert('Dodaj przynajmniej jeden składnik!'); return; }
         
         const recipe = {
             id: this.editingRecipe?.id || Date.now(),
             name,
             categories: [...this.currentRecipe.categories],
-            tags: [...this.currentRecipe.tags],
-            ingredients: [...this.currentRecipe.ingredients],
-            steps: this.currentRecipe.steps.filter(s => s.trim()),
+            tags:       [...this.currentRecipe.tags],
+            ingredients:[...this.currentRecipe.ingredients],
+            steps:      this.currentRecipe.steps.filter(s => s.trim()),
             totalCalories: Math.round(this.calculateCalories(this.currentRecipe.ingredients)),
-            createdAt: this.editingRecipe?.createdAt || new Date().toISOString()
+            createdAt:  this.editingRecipe?.createdAt || new Date().toISOString()
         };
         
         if (this.editingRecipe) {
@@ -409,24 +377,23 @@ const app = {
             this.recipes.push(recipe);
         }
         
-        this.saveToStorage();
+        await this.saveToStorage();
         this.renderRecipes();
         this.updateFilters();
         this.closeRecipeModal();
     },
 
-    // Edit recipe
     editRecipe(id) {
         const recipe = this.recipes.find(r => r.id === id);
         if (!recipe) return;
         
         this.editingRecipe = recipe;
         this.currentRecipe = {
-            name: recipe.name,
+            name:        recipe.name,
             categories: [...recipe.categories],
-            tags: [...recipe.tags],
-            ingredients: [...recipe.ingredients],
-            steps: [...recipe.steps]
+            tags:       [...recipe.tags],
+            ingredients:[...recipe.ingredients],
+            steps:      [...recipe.steps]
         };
         
         document.getElementById('modalTitle').textContent = 'Edytuj przepis';
@@ -439,43 +406,31 @@ const app = {
         document.getElementById('recipeModal').classList.add('active');
     },
 
-    // Delete recipe
-    deleteRecipe(id) {
+    async deleteRecipe(id) {
         if (confirm('Czy na pewno chcesz usunąć ten przepis?')) {
             this.recipes = this.recipes.filter(r => r.id !== id);
-            this.saveToStorage();
+            await this.saveToStorage();
             this.renderRecipes();
             this.updateFilters();
         }
     },
 
-    // Download recipe as PDF
     downloadPDF(id) {
         const recipe = this.recipes.find(r => r.id === id);
         if (!recipe) return;
         
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
         let y = 20;
         
-        // Title
         doc.setFontSize(20);
         doc.text(recipe.name, 20, y);
         y += 15;
         
-        // Categories and tags
         doc.setFontSize(10);
-        if (recipe.categories.length > 0) {
-            doc.text('Kategorie: ' + recipe.categories.join(', '), 20, y);
-            y += 7;
-        }
-        if (recipe.tags.length > 0) {
-            doc.text('Tagi: #' + recipe.tags.join(', #'), 20, y);
-            y += 10;
-        }
+        if (recipe.categories.length > 0) { doc.text('Kategorie: ' + recipe.categories.join(', '), 20, y); y += 7; }
+        if (recipe.tags.length > 0)       { doc.text('Tagi: #' + recipe.tags.join(', #'), 20, y); y += 10; }
         
-        // Ingredients
         doc.setFontSize(14);
         doc.text('Skladniki:', 20, y);
         y += 7;
@@ -493,7 +448,6 @@ const app = {
         doc.text(`Razem: ${recipe.totalCalories} kcal`, 20, y);
         y += 10;
         
-        // Steps
         doc.setFontSize(14);
         doc.text('Przygotowanie:', 20, y);
         y += 7;
@@ -502,10 +456,7 @@ const app = {
         recipe.steps.forEach((step, i) => {
             const lines = doc.splitTextToSize(`${i + 1}. ${step}`, 170);
             lines.forEach(line => {
-                if (y > 280) {
-                    doc.addPage();
-                    y = 20;
-                }
+                if (y > 280) { doc.addPage(); y = 20; }
                 doc.text(line, 20, y);
                 y += 6;
             });
@@ -515,7 +466,6 @@ const app = {
         doc.save(`${recipe.name}.pdf`);
     },
 
-    // Show add ingredient modal
     showAddIngredient() {
         document.getElementById('newIngredientName').value = '';
         document.getElementById('newIngredientKcal').value = '';
@@ -523,34 +473,23 @@ const app = {
         document.getElementById('ingredientModal').classList.add('active');
     },
 
-    // Close ingredient modal
     closeIngredientModal() {
         document.getElementById('ingredientModal').classList.remove('active');
     },
 
-    // Save new ingredient
-    saveIngredient() {
+    async saveIngredient() {
         const name = document.getElementById('newIngredientName').value.trim().toLowerCase();
         const kcal = parseFloat(document.getElementById('newIngredientKcal').value);
         const unit = document.getElementById('newIngredientUnit').value;
         
-        if (!name || !kcal) {
-            alert('Wypełnij wszystkie pola!');
-            return;
-        }
+        if (!name || !kcal) { alert('Wypełnij wszystkie pola!'); return; }
         
-        // Add to both ingredients and customIngredients
         this.ingredients[name] = { kcal, unit };
-        this.customIngredients[name] = { kcal, unit };
-        
-        this.saveToStorage();
+        await this.saveToStorage();
         this.populateIngredientSelect();
         this.renderIngredientDatabase();
         this.closeIngredientModal();
     }
 };
 
-// Initialize app when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
-});
+document.addEventListener('DOMContentLoaded', () => { app.init(); });
