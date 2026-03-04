@@ -7,7 +7,7 @@ const app = {
 
     // ─── JSONBin config ────────────────────────────────────────────────────────
     BIN_ID:  '69a81141d0ea881f40edc933',   // e.g. '6642f3e9acd3cb34a83f1234'
-    API_KEY: '$2a$10$1nDZDuzFOOym1hd0qtFdo.NklPvek6DOirNHOL8re5XFt.0mWbeDK',  // e.g. '$2a$10$...'
+    API_KEY: '$2a$10$mSZ34uDjWfYsW2LhVV44i.r8ZC4g0IouOa4/JyeZfZcQkllXhM/Vq',  // e.g. '$2a$10$...'
     get BIN_URL() {
         return `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
     },
@@ -493,4 +493,5 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => { app.init(); });
+
 
